@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Horloge de la classe</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===================== ÉCRAN PRINCIPAL ===================== -->
+  <main id="ecran">
+    <section id="zone-horloge">
+      <svg id="horloge" viewBox="-520 -520 1040 1040" aria-label="Horloge de la journée"></svg>
+    </section>
+
+    <section id="zone-moment">
+      <div id="date-jour"></div>
+      <div id="carte-moment">
+        <div id="moment-cadre"><img id="moment-image" alt=""></div>
+        <div id="moment-nom"></div>
+        <div id="moment-progression"><div id="moment-progression-barre"></div></div>
+      </div>
+      <div id="moment-suite"></div>
+    </section>
+  </main>
+
+  <!-- Coin secret : appui long (2 secondes) pour ouvrir les paramètres -->
+  <div id="coin-secret" aria-hidden="true"><svg viewBox="0 0 40 40"><circle id="coin-anneau" cx="20" cy="20" r="16"/></svg></div>
+
+  <!-- ===================== PARAMÈTRES ===================== -->
+  <div id="parametres" hidden>
+    <header class="p-entete">
+      <h1>Paramètres</h1>
+      <nav class="p-onglets">
+        <button data-onglet="moments" class="actif">Moments</button>
+        <button data-onglet="semaine">Semaine</button>
+        <button data-onglet="exceptions">Exceptions</button>
+        <button data-onglet="affichage">Affichage</button>
+        <button data-onglet="sauvegarde">Sauvegarde</button>
+      </nav>
+      <button id="p-fermer" class="btn btn-principal">Fermer ✕</button>
+    </header>
+    <div id="p-contenu"></div>
+  </div>
+
+  <div id="toast" hidden></div>
+
+  <script src="config-exemple.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
