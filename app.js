@@ -14,8 +14,9 @@
 
   // Géométrie du cadran (unités du viewBox SVG)
   var R_CADRAN = 470;      // rayon des parts de camembert
-  var R_SAILLIE = 20;      // la part du moment en cours ressort de ce nombre d'unités
+  var R_SAILLIE = 30;      // la part du moment en cours ressort de ce nombre d'unités
   var R_CENTRE = 160;      // rayon du petit cadran blanc central
+  var R_AIGUILLE = 215;    // longueur de l'aiguille des heures (les photos commencent au-delà)
   var R_CHIFFRES = 118;    // rayon où sont posés les chiffres (dans le cadran central)
 
   var cfg = chargerConfig();
@@ -162,7 +163,7 @@
   /** Cherche la plus grande photo (carré) qui tient dans une part, et sa distance au centre. */
   function placePhoto(duree, tailleMax) {
     var theta = Math.min(duree, 720) / 720 * 2 * Math.PI;
-    var rMin = R_CENTRE + 16, rMax = R_CADRAN - 14, meilleur = { r: (rMin + rMax) / 2, taille: 0 };
+    var rMin = R_AIGUILLE + 18, rMax = R_CADRAN - 14, meilleur = { r: (rMin + rMax) / 2, taille: 0 };
     for (var rv = rMax; rv >= rMin; rv -= 4) {
       var largeur = theta >= Math.PI ? 1e9 : 2 * rv * Math.sin(theta / 2);
       var t = Math.min(tailleMax, largeur * 0.68, (rMax - rv) / 0.72, (rv - rMin) / 0.72);
@@ -200,11 +201,6 @@
       s += '<path class="part' + (k === encours.index ? ' part-active' : '') + '" d="' + cheminPart(e.debut, e.fin, r) + '" fill="' + echapper(moment(e.moment).couleur) + '"/>';
     });
 
-    // Longue aiguille des heures : sous les photos (pour ne pas les cacher), au-dessus des couleurs
-    var longueur = R_CADRAN - 30;
-    s += '<g class="rot-heures"><line class="aiguille-halo" x1="0" y1="0" x2="0" y2="' + -longueur + '"/>' +
-      '<line class="aiguille-heures" x1="0" y1="0" x2="0" y2="' + -longueur + '"/></g>';
-
     // Photos dans les parts
     plagesMaison(h).forEach(function (p) {
       if (p[1] - p[0] >= 40 || !h.length) {
@@ -228,8 +224,9 @@
       s += '<text class="chiffre" x="' + f(R_CHIFFRES * Math.sin(an)) + '" y="' + f(-R_CHIFFRES * Math.cos(an) + 2) + '">' + n + '</text>';
     }
 
-    // Par-dessus le cadran central : la même aiguille des heures (partie centrale), puis les minutes
-    var aig = '<g class="rot-heures"><line class="aiguille-heures" x1="0" y1="34" x2="0" y2="' + -(R_CENTRE + 10) + '"/></g>' +
+    // Aiguilles : celle des heures dépasse juste du cadran central, sans toucher les photos
+    var aig = '<g class="rot-heures"><line class="aiguille-halo" x1="0" y1="30" x2="0" y2="' + -R_AIGUILLE + '"/>' +
+      '<line class="aiguille-heures" x1="0" y1="30" x2="0" y2="' + -R_AIGUILLE + '"/></g>' +
       '<g id="aiguille-minutes"' + (cfg.options.aiguilleMinutes ? '' : ' style="display:none"') + '>' +
       '<line class="aiguille-minutes" x1="0" y1="20" x2="0" y2="' + -(R_CENTRE - 28) + '"/></g>' +
       '<circle class="moyeu" r="24"/><circle class="moyeu-centre" r="8"/>';
