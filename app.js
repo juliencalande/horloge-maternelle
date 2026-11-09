@@ -13,9 +13,10 @@
                  '#B8B8E8', '#4D96FF', '#9AD0EC', '#2EC4B6', '#43AA8B', '#90BE6D', '#FFB4A2'];
 
   // Géométrie du cadran (unités du viewBox SVG)
-  var R_CADRAN = 330;      // rayon des parts de camembert
-  var R_CHIFFRES = 262;    // rayon où sont posés les chiffres
-  var R_VIGNETTES = 420;   // rayon du cercle des photos
+  var R_CADRAN = 470;      // rayon des parts de camembert
+  var R_SAILLIE = 20;      // la part du moment en cours ressort de ce nombre d'unités
+  var R_CENTRE = 160;      // rayon du petit cadran blanc central
+  var R_CHIFFRES = 118;    // rayon où sont posés les chiffres (dans le cadran central)
 
   var cfg = chargerConfig();
   var decalageApercu = 0;  // décalage (ms) utilisé par l'aperçu dans les paramètres
@@ -158,19 +159,30 @@
     return libres;
   }
 
-  function vignette(svg, idx, m, milieu, duree, actif) {
-    var arc = duree / 720 * 2 * Math.PI * R_VIGNETTES;
-    var diam = Math.max(58, Math.min(150, arc * 0.9));
-    if (actif) diam = Math.min(175, diam * 1.18);
-    var r = diam / 2;
-    var p = point(milieu, R_VIGNETTES);
-    var id = 'clip-v' + idx;
-    return '<clipPath id="' + id + '"><circle cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' + f(r) + '"/></clipPath>' +
-      '<circle class="vignette-ombre" cx="' + f(p[0] + 3) + '" cy="' + f(p[1] + 6) + '" r="' + f(r + 4) + '"/>' +
-      '<circle cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' + f(r) + '" fill="' + echapper(m.couleur) + '"/>' +
-      '<image href="' + echapper(cheminImage(m.image)) + '" x="' + f(p[0] - r) + '" y="' + f(p[1] - r) + '" width="' + f(diam) + '" height="' + f(diam) +
-      '" preserveAspectRatio="xMidYMid slice" clip-path="url(#' + id + ')"/>' +
-      '<circle class="vignette-bord' + (actif ? ' vignette-active' : '') + '" cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' + f(r) + '" stroke="' + echapper(m.couleur) + '"/>';
+  /** Cherche la plus grande photo (carré) qui tient dans une part, et sa distance au centre. */
+  function placePhoto(duree, tailleMax) {
+    var theta = Math.min(duree, 720) / 720 * 2 * Math.PI;
+    var rMin = R_CENTRE + 16, rMax = R_CADRAN - 14, meilleur = { r: (rMin + rMax) / 2, taille: 0 };
+    for (var rv = rMax; rv >= rMin; rv -= 4) {
+      var largeur = theta >= Math.PI ? 1e9 : 2 * rv * Math.sin(theta / 2);
+      var t = Math.min(tailleMax, largeur * 0.68, (rMax - rv) / 0.72, (rv - rMin) / 0.72);
+      if (t > meilleur.taille + 0.5) meilleur = { r: rv, taille: t };
+    }
+    return meilleur;
+  }
+
+  function photo(idx, m, milieu, duree, actif, tailleMax) {
+    var pl = placePhoto(duree, tailleMax);
+    if (pl.taille < 30) return '';
+    var t = pl.taille, p = point(milieu, pl.r), x = p[0] - t / 2, y = p[1] - t / 2;
+    var arrondi = t * 0.12, id = 'clip-v' + idx;
+    var bord = actif ? Math.max(8, t * 0.07) : Math.max(5, t * 0.045);
+    return '<clipPath id="' + id + '"><rect x="' + f(x) + '" y="' + f(y) + '" width="' + f(t) + '" height="' + f(t) + '" rx="' + f(arrondi) + '"/></clipPath>' +
+      '<rect class="vignette-ombre" x="' + f(x - bord + 3) + '" y="' + f(y - bord + 6) + '" width="' + f(t + 2 * bord) + '" height="' + f(t + 2 * bord) + '" rx="' + f(arrondi + bord) + '"/>' +
+      '<rect x="' + f(x - bord) + '" y="' + f(y - bord) + '" width="' + f(t + 2 * bord) + '" height="' + f(t + 2 * bord) + '" rx="' + f(arrondi + bord) + '" fill="#FFFFFF"/>' +
+      '<rect x="' + f(x) + '" y="' + f(y) + '" width="' + f(t) + '" height="' + f(t) + '" rx="' + f(arrondi) + '" fill="' + echapper(m.couleur) + '"/>' +
+      '<image href="' + echapper(cheminImage(m.image)) + '" x="' + f(x) + '" y="' + f(y) + '" width="' + f(t) + '" height="' + f(t) +
+      '" preserveAspectRatio="xMidYMid slice" clip-path="url(#' + id + ')"/>';
   }
 
   function dessinerCadran(d, encours) {
@@ -178,56 +190,58 @@
     var h = encours.horaire;
     var maison = moment(ID_MAISON);
     var s = '';
-    var vign = '';
-
-    // Fond « À la maison »
-    s += '<circle cx="0" cy="0" r="' + R_CADRAN + '" fill="' + echapper(maison.couleur) + '" class="part"/>';
-    // Parts des moments d'école
-    h.forEach(function (e) {
-      s += '<path class="part" d="' + cheminPart(e.debut, e.fin, R_CADRAN) + '" fill="' + echapper(moment(e.moment).couleur) + '"/>';
-    });
-    // Bord du cadran
-    s += '<circle cx="0" cy="0" r="' + R_CADRAN + '" fill="none" stroke="#FFFFFF" stroke-width="10"/>';
-
-    // Graduations
-    for (var i = 0; i < 60; i++) {
-      var heure = i % 5 === 0;
-      var a = i / 60 * 2 * Math.PI, r1 = R_CADRAN - (heure ? 34 : 16), r2 = R_CADRAN - 7;
-      s += '<line class="graduation" x1="' + f(r1 * Math.sin(a)) + '" y1="' + f(-r1 * Math.cos(a)) + '" x2="' + f(r2 * Math.sin(a)) +
-        '" y2="' + f(-r2 * Math.cos(a)) + '" stroke-width="' + (heure ? 8 : 4) + '"/>';
-    }
-    // Chiffres 1 à 12
-    for (var n = 1; n <= 12; n++) {
-      var an = n / 12 * 2 * Math.PI, x = R_CHIFFRES * Math.sin(an), y = -R_CHIFFRES * Math.cos(an);
-      s += '<circle class="chiffre-fond" cx="' + f(x) + '" cy="' + f(y) + '" r="50"/>' +
-        '<text class="chiffre" x="' + f(x) + '" y="' + f(y + 3) + '">' + n + '</text>';
-    }
-
-    // Vignettes (photos) sur le pourtour
     var idx = 0;
+
+    // Fond « À la maison » (et sa part ressort si c'est le moment en cours)
+    s += '<circle cx="0" cy="0" r="' + (encours.entree ? R_CADRAN : R_CADRAN + R_SAILLIE) + '" fill="' + echapper(maison.couleur) + '" class="part"/>';
+    // Parts des moments d'école ; la part en cours ressort légèrement
+    h.forEach(function (e, k) {
+      var r = k === encours.index ? R_CADRAN + R_SAILLIE : R_CADRAN;
+      s += '<path class="part' + (k === encours.index ? ' part-active' : '') + '" d="' + cheminPart(e.debut, e.fin, r) + '" fill="' + echapper(moment(e.moment).couleur) + '"/>';
+    });
+
+    // Longue aiguille des heures : sous les photos (pour ne pas les cacher), au-dessus des couleurs
+    var longueur = R_CADRAN - 30;
+    s += '<g class="rot-heures"><line class="aiguille-halo" x1="0" y1="0" x2="0" y2="' + -longueur + '"/>' +
+      '<line class="aiguille-heures" x1="0" y1="0" x2="0" y2="' + -longueur + '"/></g>';
+
+    // Photos dans les parts
     plagesMaison(h).forEach(function (p) {
-      // Une photo « maison » seulement dans les plages assez grandes (ou s'il n'y a que la maison)
       if (p[1] - p[0] >= 40 || !h.length) {
-        vign += vignette(svg, idx++, maison, h.length ? (p[0] + p[1]) / 2 : 0, Math.min(p[1] - p[0], 200), !encours.entree);
+        s += photo(idx++, maison, h.length ? (p[0] + p[1]) / 2 : 360, p[1] - p[0], !encours.entree, h.length ? 230 : 280);
       }
     });
     h.forEach(function (e, k) {
-      vign += vignette(svg, idx++, moment(e.moment), (e.debut + e.fin) / 2, e.fin - e.debut, k === encours.index);
+      s += photo(idx++, moment(e.moment), (e.debut + e.fin) / 2, e.fin - e.debut, k === encours.index, 190);
     });
 
-    // Aiguilles
-    var aig = '<g id="aiguille-minutes"' + (cfg.options.aiguilleMinutes ? '' : ' style="display:none"') + '>' +
-      '<line class="aiguille-minutes" x1="0" y1="30" x2="0" y2="-290"/></g>' +
-      '<g id="aiguille-heures"><line class="aiguille-heures" x1="0" y1="30" x2="0" y2="-195"/></g>' +
-      '<circle class="moyeu" r="30"/><circle class="moyeu-centre" r="10"/>';
+    // Petit cadran blanc au centre, avec les chiffres
+    s += '<circle class="centre-fond" cx="0" cy="0" r="' + R_CENTRE + '"/>';
+    for (var i = 0; i < 60; i++) {
+      var heure = i % 5 === 0;
+      var a = i / 60 * 2 * Math.PI, r1 = R_CENTRE - (heure ? 22 : 11), r2 = R_CENTRE - 5;
+      s += '<line class="graduation" x1="' + f(r1 * Math.sin(a)) + '" y1="' + f(-r1 * Math.cos(a)) + '" x2="' + f(r2 * Math.sin(a)) +
+        '" y2="' + f(-r2 * Math.cos(a)) + '" stroke-width="' + (heure ? 5 : 2.5) + '"/>';
+    }
+    for (var n = 1; n <= 12; n++) {
+      var an = n / 12 * 2 * Math.PI;
+      s += '<text class="chiffre" x="' + f(R_CHIFFRES * Math.sin(an)) + '" y="' + f(-R_CHIFFRES * Math.cos(an) + 2) + '">' + n + '</text>';
+    }
 
-    svg.innerHTML = vign + s + aig;
+    // Par-dessus le cadran central : la même aiguille des heures (partie centrale), puis les minutes
+    var aig = '<g class="rot-heures"><line class="aiguille-heures" x1="0" y1="34" x2="0" y2="' + -(R_CENTRE + 10) + '"/></g>' +
+      '<g id="aiguille-minutes"' + (cfg.options.aiguilleMinutes ? '' : ' style="display:none"') + '>' +
+      '<line class="aiguille-minutes" x1="0" y1="20" x2="0" y2="' + -(R_CENTRE - 28) + '"/></g>' +
+      '<circle class="moyeu" r="24"/><circle class="moyeu-centre" r="8"/>';
+
+    svg.innerHTML = s + aig;
   }
 
   function placerAiguilles(d) {
     var min = d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
-    var gh = document.getElementById('aiguille-heures'), gm = document.getElementById('aiguille-minutes');
-    if (gh) gh.setAttribute('transform', 'rotate(' + f((min % 720) / 2) + ')');
+    var gm = document.getElementById('aiguille-minutes');
+    var rot = 'rotate(' + f((min % 720) / 2) + ')';
+    Array.prototype.forEach.call(document.querySelectorAll('#horloge .rot-heures'), function (g) { g.setAttribute('transform', rot); });
     if (gm) gm.setAttribute('transform', 'rotate(' + f((min % 60) * 6) + ')');
   }
 
