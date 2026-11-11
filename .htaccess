@@ -1,0 +1,8 @@
+# Réglages serveur pour l'horloge (Hostinger / Apache)
+AddType application/manifest+json .webmanifest
+<IfModule mod_headers.c>
+  # Toujours vérifier la dernière version de la page et du service worker
+  <FilesMatch "^(index\.html|sw\.js|manifest\.webmanifest)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
