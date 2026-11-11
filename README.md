@@ -19,7 +19,7 @@ Copiez **tout le dossier** (sur l'ordinateur du tableau, une clé USB…), jamai
 
 Les écrans Promethean ActivPanel fonctionnent sous Android et ont leur propre navigateur (Chromium/Chrome). Le plus simple est d'utiliser la version en ligne de l'horloge :
 
-1. Sur l'écran, ouvrez le navigateur et allez à l'adresse **https://juliencalande.github.io/horloge-maternelle/**.
+1. Sur l'écran, ouvrez le navigateur et allez à l'adresse **https://horloge.calande.eu/**.
 2. **Installez-la comme une application** : menu du navigateur **⋮** → **Installer l'application** (ou **Ajouter à l'écran d'accueil**). Une icône « Horloge » apparaît ; elle ouvre l'horloge **en plein écran, sans barre de navigateur**.
 3. Une fois ouverte une première fois, l'horloge **continue de fonctionner sans internet** : elle garde une copie d'elle-même. Quand internet est disponible, elle récupère automatiquement les mises à jour.
 4. **Mise en veille** : dans les paramètres de l'écran (*Paramètres → Énergie* / *Économie d'énergie*, selon le modèle), désactivez la mise en veille ou l'extinction automatique pendant les heures de classe. Vous pouvez aussi y programmer l'allumage le matin et l'extinction le soir. L'horloge demande elle-même à l'écran de rester allumé quand le navigateur le permet.
@@ -40,10 +40,10 @@ Si l'écran est relié à un **ordinateur Windows** (ou s'il contient un module 
 **Option « borne »** (plein écran direct, sans barre du navigateur) : créez un raccourci sur le bureau avec comme cible :
 
 ```
-"C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk "https://juliencalande.github.io/horloge-maternelle/"
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk "https://horloge.calande.eu/"
 ```
 
-(Avec Edge : `msedge.exe --kiosk "https://juliencalande.github.io/horloge-maternelle/" --edge-kiosk-type=fullscreen`.) Pour quitter ce mode : **Alt + F4**.
+(Avec Edge : `msedge.exe --kiosk "https://horloge.calande.eu/" --edge-kiosk-type=fullscreen`.) Pour quitter ce mode : **Alt + F4**.
 
 ## 2. Ouvrir les paramètres (geste discret)
 
