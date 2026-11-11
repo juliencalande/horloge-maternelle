@@ -11,24 +11,39 @@ Une horloge visuelle pour la classe de maternelle : à gauche, une grande horlog
 | `config-exemple.js` | La journée type d'exemple, chargée au premier démarrage. |
 | `exemple-configuration.json` | La même configuration, à importer si besoin. |
 | `app.js`, `style.css` | Le fonctionnement et l'apparence (inutile d'y toucher). |
+| `manifest.webmanifest`, `sw.js`, `icones/` | Permettent d'installer l'horloge comme une application et de l'utiliser hors ligne. |
 
 Copiez **tout le dossier** (sur l'ordinateur du tableau, une clé USB…), jamais `index.html` seul.
 
-## 1. Ouvrir l'horloge en plein écran sur le tableau
+## 1. Sur l'écran Promethean (ActivPanel)
 
-1. Double-cliquez sur `index.html`. Utilisez de préférence **Google Chrome** ou **Microsoft Edge** (clic droit → *Ouvrir avec*).
+Les écrans Promethean ActivPanel fonctionnent sous Android et ont leur propre navigateur (Chromium/Chrome). Le plus simple est d'utiliser la version en ligne de l'horloge :
+
+1. Sur l'écran, ouvrez le navigateur et allez à l'adresse **https://juliencalande.github.io/horloge-maternelle/**.
+2. **Installez-la comme une application** : menu du navigateur **⋮** → **Installer l'application** (ou **Ajouter à l'écran d'accueil**). Une icône « Horloge » apparaît ; elle ouvre l'horloge **en plein écran, sans barre de navigateur**.
+3. Une fois ouverte une première fois, l'horloge **continue de fonctionner sans internet** : elle garde une copie d'elle-même. Quand internet est disponible, elle récupère automatiquement les mises à jour.
+4. **Mise en veille** : dans les paramètres de l'écran (*Paramètres → Énergie* / *Économie d'énergie*, selon le modèle), désactivez la mise en veille ou l'extinction automatique pendant les heures de classe. Vous pouvez aussi y programmer l'allumage le matin et l'extinction le soir. L'horloge demande elle-même à l'écran de rester allumé quand le navigateur le permet.
+5. **Photos** : touchez **🖼 Choisir une photo** dans l'onglet *Moments* et prenez la photo dans la galerie de l'écran ou sur une **clé USB**. Voir la section 3.
+
+> Si le menu flottant Promethean (les flèches sur les bords de l'écran) gêne, il peut être masqué ou déplacé dans les réglages de l'écran. Le coin secret des paramètres (en haut à droite) n'est pas concerné.
+
+Si l'écran est relié à un **ordinateur Windows** (ou s'il contient un module PC « OPS »), vous pouvez aussi utiliser la version locale décrite ci-dessous.
+
+## 1 bis. Sur un ordinateur : ouvrir l'horloge en plein écran
+
+1. Double-cliquez sur `index.html`. Utilisez de préférence **Google Chrome** ou **Microsoft Edge** (clic droit → *Ouvrir avec*). La version en ligne (adresse ci-dessus) fonctionne aussi et peut être installée de la même façon (icône ⊕ dans la barre d'adresse).
 2. Passez en plein écran :
    - avec un clavier : touche **F11** (pour sortir : F11 ou Échap) ;
    - sans clavier : ouvrez les paramètres (voir plus bas) → onglet **Affichage** → **⛶ Plein écran**.
-3. Pour que l'écran ne s'éteigne pas : dans Windows, *Paramètres → Système → Alimentation* → mise en veille de l'écran sur **Jamais** pendant les heures de classe. L'horloge demande aussi au navigateur de garder l'écran allumé quand c'est possible.
+3. Pour que l'écran ne s'éteigne pas : dans Windows, *Paramètres → Système → Alimentation* → mise en veille de l'écran sur **Jamais** pendant les heures de classe.
 
 **Option « borne »** (plein écran direct, sans barre du navigateur) : créez un raccourci sur le bureau avec comme cible :
 
 ```
-"C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk "C:\chemin\vers\Horloge-Maternelle\index.html"
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk "https://juliencalande.github.io/horloge-maternelle/"
 ```
 
-(Avec Edge : `msedge.exe --kiosk "…\index.html" --edge-kiosk-type=fullscreen`.) Pour quitter ce mode : **Alt + F4**.
+(Avec Edge : `msedge.exe --kiosk "https://juliencalande.github.io/horloge-maternelle/" --edge-kiosk-type=fullscreen`.) Pour quitter ce mode : **Alt + F4**.
 
 ## 2. Ouvrir les paramètres (geste discret)
 
@@ -49,14 +64,14 @@ Tout est **enregistré automatiquement** dans le navigateur.
 
 ## 3. Mettre les photos de la classe
 
-1. Copiez vos photos dans le dossier `images` (JPG, PNG… de préférence carrées, environ 600 × 600 pixels).
-2. Deux possibilités :
-   - **donner le même nom** que l'image provisoire, par exemple `recreation.jpg`, puis indiquer ce nom dans l'onglet **Moments** (l'extension compte : `.jpg` ≠ `.svg`) ;
-   - ou, dans l'onglet **Moments**, toucher **🖼 Choisir** et sélectionner la photo **dans le dossier `images`**.
-3. L'année suivante, il suffit de remplacer les fichiers du dossier `images` en gardant les mêmes noms : rien d'autre à changer.
+**Méthode conseillée (fonctionne partout, y compris sur l'écran Promethean)** : dans l'onglet **Moments**, touchez **🖼 Choisir une photo** à côté du moment et choisissez l'image (galerie, clé USB, dossier de l'ordinateur…). La photo est automatiquement réduite et **enregistrée dans l'horloge elle-même** : elle n'est pas publiée sur internet et fait partie de l'export de sauvegarde.
+
+**Autre méthode (version locale sur ordinateur uniquement)** : copiez la photo dans le dossier `images` et tapez son nom (par exemple `recreation.jpg`) dans le champ « Image ». L'extension compte : `.jpg` ≠ `.svg`.
+
+> 🔒 Les photos de la classe ne doivent pas être ajoutées au dossier `images` du dépôt GitHub : tout ce qui s'y trouve est visible publiquement sur internet. Utilisez « Choisir une photo » : elles restent sur l'écran de la classe.
 
 ## 4. Sauvegarder ou changer d'ordinateur
 
-Les réglages sont propres au navigateur et à l'ordinateur. Pensez à faire **Sauvegarde → Exporter la configuration** après chaque modification importante. Sur un autre ordinateur (ou après un nettoyage du navigateur) : **Importer un fichier** et choisir ce fichier `.json`. N'oubliez pas de copier aussi le dossier `images`.
+Les réglages (et les photos choisies avec « Choisir une photo ») sont propres au navigateur et à l'appareil. Pensez à faire **Sauvegarde → Exporter la configuration** après chaque modification importante. Sur un autre ordinateur (ou après un nettoyage du navigateur) : **Importer un fichier** et choisir ce fichier `.json`. Les photos choisies avec « Choisir une photo » sont incluses dans le fichier ; seules celles tapées par nom de fichier nécessitent de copier aussi le dossier `images`.
 
 > ⚠ Effacer les données de navigation du navigateur efface aussi les réglages : gardez toujours un export à jour.

@@ -79,7 +79,7 @@
   }
   function enregistrer() {
     try { localStorage.setItem(CLE_STOCKAGE, JSON.stringify(cfg)); }
-    catch (e) { toast('⚠ Impossible d\'enregistrer dans le navigateur.'); }
+    catch (e) { toast('⚠ Mémoire du navigateur pleine : impossible d\'enregistrer (trop de photos ?).'); }
     etat.cleCadran = null; etat.cleMoment = null; // force le redessin
     rafraichir();
   }
@@ -393,14 +393,34 @@
     ({ moments: ongletMoments, semaine: ongletSemaine, exceptions: ongletExceptions, affichage: ongletAffichage, sauvegarde: ongletSauvegarde })[nom](c);
   }
 
+  /** Lit une image choisie, la réduit (max 600 px) et renvoie une image JPEG intégrée (data URL). */
+  function reduirePhoto(fichier, rappel) {
+    var lecteur = new FileReader();
+    lecteur.onerror = function () { rappel(null); };
+    lecteur.onload = function () {
+      var image = new Image();
+      image.onerror = function () { rappel(null); };
+      image.onload = function () {
+        var max = 600, e = Math.min(1, max / Math.max(image.width, image.height));
+        var c = document.createElement('canvas');
+        c.width = Math.round(image.width * e); c.height = Math.round(image.height * e);
+        var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(image, 0, 0, c.width, c.height);
+        rappel(c.toDataURL('image/jpeg', 0.82));
+      };
+      image.src = lecteur.result;
+    };
+    lecteur.readAsDataURL(fichier);
+  }
+
   function champ(label, input) { var l = el('label', { 'class': 'p-champ' }); l.appendChild(document.createTextNode(label)); l.appendChild(input); return l; }
   function bouton(texte, classe, action) { var b = el('button', { 'class': 'btn ' + (classe || ''), type: 'button' }); b.textContent = texte; b.addEventListener('click', action); return b; }
 
   // ---- Onglet Moments ----
   function ongletMoments(c) {
     var s = el('div', { 'class': 'p-section' }, '<h2>Bibliothèque de moments</h2><p class="p-aide">Chaque moment a un nom, une couleur et une image. ' +
-      'Les images sont rangées dans le dossier <b>images</b> à côté de l\'application : indiquez simplement le nom du fichier ' +
-      '(par exemple <i>recreation.jpg</i>) ou touchez « Choisir » et sélectionnez la photo dans ce dossier. ' +
+      'Touchez « Choisir une photo » pour prendre une image dans la galerie, une clé USB ou le dossier de votre choix : ' +
+      'elle est réduite et enregistrée dans l\'horloge (et dans l\'export). Vous pouvez aussi taper le nom d\'un fichier du dossier <b>images</b>. ' +
       'Le moment « À la maison » couvre automatiquement tout ce qui se passe en dehors de l\'école.</p>');
     cfg.moments.forEach(function (m) { s.appendChild(carteMoment(m)); });
     var r = el('div', { 'class': 'btn-rangee' });
@@ -441,18 +461,26 @@
     });
     carte.appendChild(pastilles);
 
-    var img = el('input', { type: 'text', 'class': 'p-image-nom', value: m.image || '', placeholder: 'photo.jpg' });
-    img.addEventListener('change', function () { m.image = img.value.trim(); majVignette(); enregistrer(); });
-    carte.appendChild(champ('Image (dossier images)', img));
+    var integree = /^data:/.test(m.image || '');
+    var img = el('input', { type: 'text', 'class': 'p-image-nom', value: integree ? '' : (m.image || ''),
+      placeholder: integree ? '(photo intégrée)' : 'photo.jpg' });
+    img.addEventListener('change', function () {
+      if (!img.value.trim() && integree) return; // garde la photo intégrée
+      m.image = img.value.trim(); integree = false; img.placeholder = 'photo.jpg'; majVignette(); enregistrer();
+    });
+    carte.appendChild(champ('Image (fichier du dossier images)', img));
     var fichier = el('input', { type: 'file', accept: 'image/*', hidden: '' });
     fichier.addEventListener('change', function () {
-      if (fichier.files && fichier.files[0]) {
-        m.image = fichier.files[0].name; img.value = m.image; majVignette(); enregistrer();
-        toast('Image « ' + m.image + ' » : elle doit se trouver dans le dossier images.');
-      }
+      var fch = fichier.files && fichier.files[0]; fichier.value = '';
+      if (!fch) return;
+      reduirePhoto(fch, function (dataUrl) {
+        if (!dataUrl) { toast('Cette image ne peut pas être lue.'); return; }
+        m.image = dataUrl; integree = true; img.value = ''; img.placeholder = '(photo intégrée)';
+        majVignette(); enregistrer(); toast('Photo enregistrée dans l\'horloge ✔');
+      });
     });
     carte.appendChild(fichier);
-    carte.appendChild(bouton('🖼 Choisir', '', function () { fichier.click(); }));
+    carte.appendChild(bouton('🖼 Choisir une photo', '', function () { fichier.click(); }));
 
     carte.appendChild(el('div', { 'class': 'p-espace' }));
     if (m.id !== ID_MAISON) {
@@ -696,4 +724,9 @@
   $('#p-fermer').addEventListener('click', fermerParametres);
   installerCoinSecret();
   demarrer();
+
+  // Application installable + fonctionnement hors ligne (seulement en https, ex. GitHub Pages)
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
 })();
